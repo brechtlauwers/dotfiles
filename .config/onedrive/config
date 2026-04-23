@@ -173,7 +173,7 @@ skip_dir = "datasets|features|.venv"
 #sync_root_files = "false"
 
 ## Number of threads to use for upload/download.
-#threads = "8"
+threads = "4"
 
 ## File transfer ordering between client and OneDrive.
 #transfer_order = "default"
