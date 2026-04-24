@@ -146,6 +146,16 @@ Just a better Emacs help buffer
     :bind ([remap describe-function] . helpful-callable) ([remap describe-command] . helpful-command) ([remap describe-variable] . helpful-variable) ([remap describe-key] . helpful-key))
 #+end_src
 
+** Multiple-cursors
+#+begin_src emacs-lisp
+  (use-package multiple-cursors
+    :ensure t
+    :bind (("C-S-c C-S-c" . mc/edit-lines)
+  	 ("C->"         . mc/mark-next-like-this)
+  	 ("C-<"         . mc/mark-previous-like-this)
+  	 ("C-c C-<"     . mc/mark-all-like-this)))
+#+end_src
+
 * Visual
 ** Theme
 Set a custom theme
@@ -196,11 +206,35 @@ Icon set that can be used on multiple different programs and places.
 ** Mood line
 Make the mode line clean and simplistic.
 #+begin_src emacs-lisp
-    (use-package mood-line
-      :config (mood-line-mode)
-      ;; Use pretty Fira Code-compatible glyphs
-      :custom
-      (mood-line-glyph-alist mood-line-glyphs-fira-code))
+  (use-package mood-line
+    :config (mood-line-mode)
+    ;; Use pretty Fira Code-compatible glyphs
+    :custom
+    (mood-line-glyph-alist mood-line-glyphs-fira-code))
+
+  (defun my-mood-line-pdf-pages ()
+    "Displays the current page and total pages in the mood-line for PDF files."
+    (when (derived-mode-p 'pdf-view-mode)
+      (format " %d/%d "
+              (pdf-view-current-page)
+              (pdf-cache-number-of-pages))))
+
+  (defun my-mood-line-word-count ()
+    "Display total word count in text-based modes."
+    (when (derived-mode-p 'text-mode 'markdown-mode 'org-mode)
+      (format " %dW " (count-words (point-min) (point-max)))))
+
+  (setq mood-line-format
+      (mood-line-defformat
+        :left  (((mood-line-segment-buffer-status) . " ")
+                ((mood-line-segment-buffer-name)   . " ")
+                ((mood-line-segment-cursor-position) . " ")
+                ((my-mood-line-pdf-pages) . " ")
+  	      ((my-mood-line-word-count) . " "))
+        :right (((mood-line-segment-vc) . " ")
+  	      ((mood-line-segment-major-mode) . " ")
+  	      ((mood-line-segment-misc-info) . " ")
+  	      ((mood-line-segment-checker) . " "))))
 #+end_src
 
 * Writing
@@ -259,6 +293,8 @@ LaTeX fragment preview in org mode
     :after org
     :config
     (add-hook 'org-mode-hook #'org-fragtog-mode))
+  (setq org-format-latex-options
+        (plist-put org-format-latex-options :scale 1.5))
 #+end_src
 
 ** Org roam
@@ -371,20 +407,30 @@ idk
     (add-to-list 'TeX-input-list '(nil "/usr/share/texmf-dist/tex/latex/acmart"))
     ;; to use pdfview with auctex
     (TeX-view-program-selection '((output-pdf "pdf-tools"))
-				TeX-source-correlate-start-server t)
+  				TeX-source-correlate-start-server t)
     (TeX-view-program-list '(("pdf-tools" "TeX-pdf-tools-sync-view")))
     (TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
     :hook
     (LaTeX-mode . (lambda ()
-		    (turn-on-reftex)
-		    (setq reftex-plug-into-AUCTeX t)
-		    (reftex-isearch-minor-mode)
-		    (setq TeX-PDF-mode t)
-		    (setq TeX-source-correlate-method 'synctex)
-		    (setq TeX-source-correlate-start-server t))))
+  		    (turn-on-reftex)
+  		    (setq reftex-plug-into-AUCTeX t)
+  		    (reftex-isearch-minor-mode)
+  		    (setq TeX-PDF-mode t)
+  		    (setq TeX-source-correlate-method 'synctex)
+  		    (setq TeX-source-correlate-start-server t))))
 
     ; Latex inline preview
     (setq org-latex-create-formula-image-program 'dvipng)
+
+  (with-eval-after-load 'ox-latex
+  (add-to-list 'org-latex-classes
+               '("thesis-book"
+                 "\\documentclass{book}"
+                 ("\\chapter{%s}" . "\\chapter*{%s}")
+                 ("\\section{%s}" . "\\section*{%s}")
+                 ("\\subsection{%s}" . "\\subsection*{%s}")
+                 ("\\subsubsection{%s}" . "\\subsubsection*{%s}")
+                 ("\\paragraph{%s}" . "\\paragraph*{%s}"))))
 #+end_src
 
 ** Company mode
@@ -415,7 +461,8 @@ Spell checker which highlights incorrect words
   (use-package jinx
     :hook (emacs-startup . global-jinx-mode)
     :bind (("M-$" . jinx-correct)
-	   ("C-M-$" . jinx-languages)))
+  	   ("C-M-$" . jinx-languages)))
+  (setq jinx-languages "en_gb nl")
 #+end_src
 
 ** Markdown mode

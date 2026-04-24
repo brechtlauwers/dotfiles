@@ -137,7 +137,7 @@
 #resync_auth = "false"
 
 ## This option controls which directories are excluded from sync.
-skip_dir = "datasets|features|.venv"
+skip_dir = "datasets|features|.venv|.git"
 
 ## When enabled, skip_dir matches must be strict, full path matches only.
 #skip_dir_strict_match = "false"
